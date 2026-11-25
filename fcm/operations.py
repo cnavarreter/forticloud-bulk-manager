@@ -1,5 +1,7 @@
 """Operation definitions, row validation, request building and response interpretation.
 
+Author: Cesar Navarrete <cenavar@gmail.com>
+
 Based on the Fortinet Asset Management API V3 (Product) specification.
 """
 

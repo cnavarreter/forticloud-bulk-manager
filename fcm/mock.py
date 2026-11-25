@@ -1,5 +1,7 @@
 """A small fake FortiCloud (IAM token + Asset Management V3) server for demo / practice runs.
 
+Author: Cesar Navarrete <cenavar@gmail.com>
+
 Nothing here talks to Fortinet. Behaviour:
   * Any API ID/password works except password "bad" (returns an auth error).
   * Serial numbers containing "BAD" are rejected; serials containing "SLOW" take 3s.

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """FortiCloud Asset Bulk Manager - local web interface.
 
+Author: Cesar Navarrete <cenavar@gmail.com>
+
 Run:  python3 app.py            (real FortiCloud)
       python3 app.py --demo     (built-in fake FortiCloud, nothing is sent to Fortinet)
 

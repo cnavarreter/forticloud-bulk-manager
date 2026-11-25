@@ -1,4 +1,7 @@
-"""FortiCloud IAM OAuth + Asset Management V3 API client (standard library only)."""
+"""FortiCloud IAM OAuth + Asset Management V3 API client (standard library only).
+
+Author: Cesar Navarrete <cenavar@gmail.com>
+"""
 
 import json
 import os

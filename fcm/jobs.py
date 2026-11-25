@@ -1,4 +1,7 @@
-"""Background job runner: sends prepared requests one by one and records per-serial results."""
+"""Background job runner: sends prepared requests one by one and records per-serial results.
+
+Author: Cesar Navarrete <cenavar@gmail.com>
+"""
 
 import datetime
 import json

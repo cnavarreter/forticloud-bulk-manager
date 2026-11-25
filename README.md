@@ -1,5 +1,7 @@
 # FortiCloud Asset Bulk Manager
 
+**Author:** Cesar Navarrete ([cenavar@gmail.com](mailto:cenavar@gmail.com))
+
 A small local web app for bulk operations against the **Fortinet Asset Management API V3**
 (`https://support.fortinet.com/ES/api/registration/v3`):
 
@@ -127,3 +129,7 @@ fcm/mock.py             fake FortiCloud used by --demo
 static/index.html       the web interface
 results/                results CSV + JSON log from every run
 ```
+
+## Author
+
+Created and maintained by **Cesar Navarrete** — [cenavar@gmail.com](mailto:cenavar@gmail.com)

@@ -1,4 +1,7 @@
-"""Read and write CSV / XLSX tables using only the Python standard library."""
+"""Read and write CSV / XLSX tables using only the Python standard library.
+
+Author: Cesar Navarrete <cenavar@gmail.com>
+"""
 
 import csv
 import io
