@@ -1,0 +1,6 @@
+# run output (may contain serial numbers / account data)
+results/*
+!results/.keep
+__pycache__/
+*.pyc
+.DS_Store

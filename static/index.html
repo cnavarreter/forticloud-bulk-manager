@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FortiCloud Asset Bulk Manager</title>
+<style>
+:root{
+  --bg:#f4f5f7; --card:#fff; --ink:#1d2330; --muted:#5d6577; --line:#e1e4ea; --soft:#f7f8fa;
+  --accent:#c8102e; --accent-ink:#fff; --accent-soft:#fdecee;
+  --ok:#1a7f4b; --ok-soft:#e6f5ec; --warn:#a35c00; --warn-soft:#fff4e0; --err:#b42318; --err-soft:#fdecea;
+  --info:#2457c5; --info-soft:#e8effc; --radius:10px; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#1d2330;color:#fff;padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20}
+header h1{font-size:16px;margin:0;font-weight:600;letter-spacing:.2px}
+header .mark{width:10px;height:22px;background:var(--accent);border-radius:2px}
+header .spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.pill.off{background:#3a4253;color:#c9cfdb}.pill.on{background:#164c33;color:#7be0a8}.pill.demo{background:#5c3d00;color:#ffd27a}
+.limits{font-size:12px;color:#aab2c3}
+main{max-width:1240px;margin:0 auto;padding:20px 24px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px}
+.card h2{font-size:15px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+.card h2 .num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px}
+.sub{color:var(--muted);margin:0 0 14px}
+.grid{display:grid;gap:12px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:900px){.g4,.g3{grid-template-columns:1fr 1fr}}
+label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+input[type=text],input[type=password],input[type=number],textarea,select{width:100%;padding:8px 10px;border:1px solid #cdd2db;border-radius:7px;font:inherit;background:#fff;color:var(--ink)}
+input:focus,textarea:focus{outline:2px solid #9fb6ea;border-color:#6d8fd6}
+textarea{font-family:var(--mono);font-size:12px;min-height:110px}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button{font:inherit;font-weight:600;border-radius:7px;padding:8px 14px;border:1px solid #c6ccd6;background:#fff;color:var(--ink);cursor:pointer}
+button:hover:not(:disabled){background:var(--soft)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.primary:hover:not(:disabled){background:#a50d26}
+button.danger{background:var(--err);border-color:var(--err);color:#fff}
+button.ghost{border-color:transparent;background:transparent;color:var(--info);padding:6px 8px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tab{padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--soft);font-weight:600;font-size:13px}
+.tab.active{background:var(--ink);border-color:var(--ink);color:#fff}
+.tab .rw{font-size:10px;font-weight:700;margin-left:6px;padding:1px 5px;border-radius:4px;background:#e2e6ee;color:#4a5263}
+.tab.active .rw{background:#3a4253;color:#dfe3ea}
+.opinfo{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--info-soft);color:var(--info)}
+.badge.w{background:var(--warn-soft);color:var(--warn)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--soft);font-size:12px;color:var(--muted);position:sticky;top:0;z-index:1}
+td.mono,.mono{font-family:var(--mono);font-size:12px}
+.tablewrap{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.cols td:first-child{font-family:var(--mono);font-size:12px;white-space:nowrap}
+.req{color:var(--accent);font-weight:700}
+.drop{border:2px dashed #c3c9d4;border-radius:10px;padding:22px;text-align:center;background:var(--soft);color:var(--muted);cursor:pointer;transition:.15s}
+.drop.over{border-color:var(--info);background:var(--info-soft);color:var(--info)}
+.drop strong{color:var(--ink)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.chip{padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid transparent;cursor:pointer}
+.chip.all{background:#eef0f4}.chip.ok{background:var(--ok-soft);color:var(--ok)}.chip.warn{background:var(--warn-soft);color:var(--warn)}.chip.err{background:var(--err-soft);color:var(--err)}
+.chip.sel{border-color:currentColor}
+.st{font-weight:700;font-size:11px;padding:2px 6px;border-radius:4px;white-space:nowrap}
+.st.ok,.st.OK{background:var(--ok-soft);color:var(--ok)}.st.warning,.st.CHECK{background:var(--warn-soft);color:var(--warn)}
+.st.error,.st.FAILED{background:var(--err-soft);color:var(--err)}.st.SKIPPED,.st.NOTRUN{background:#eef0f4;color:#5d6577}
+.issues{font-size:12px}.issues .e{color:var(--err)}.issues .w{color:var(--warn)}
+.alert{padding:10px 12px;border-radius:8px;margin:10px 0;font-size:13px}
+.alert.err{background:var(--err-soft);color:var(--err)}.alert.warn{background:var(--warn-soft);color:var(--warn)}.alert.info{background:var(--info-soft);color:var(--info)}.alert.ok{background:var(--ok-soft);color:var(--ok)}
+.steps{list-style:none;padding:0;margin:12px 0 0}
+.steps li{display:grid;grid-template-columns:24px 1fr;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.steps .ic{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
+.ic.ok{background:var(--ok)}.ic.error{background:var(--err)}.ic.warn{background:var(--warn)}.ic.run{background:#9aa3b5}
+.steps .nm{font-weight:600}.steps .dt{font-size:12px;color:var(--muted);word-break:break-word}
+details{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-top:12px;background:var(--soft)}
+details>summary{cursor:pointer;font-weight:600}
+pre{background:#11151d;color:#d6deeb;padding:12px;border-radius:8px;overflow:auto;font-size:12px;max-height:420px;margin:8px 0 0}
+.progress{height:10px;background:#e7eaf0;border-radius:999px;overflow:hidden;margin:10px 0}
+.progress>div{height:100%;background:var(--accent);width:0;transition:width .3s}
+.log{max-height:220px;overflow:auto;font-family:var(--mono);font-size:12px;background:#11151d;color:#c9d1e0;border-radius:8px;padding:8px 10px}
+.log .l{padding:1px 0;white-space:pre-wrap}.log .ok{color:#7be0a8}.log .error{color:#ff9b9b}.log .info{color:#9cc2ff}
+.log .l span.d{color:#8a93a6;cursor:pointer;text-decoration:underline}
+.counts{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0}
+.counts div{font-size:12px;color:var(--muted)}.counts b{display:block;font-size:20px;color:var(--ink)}
+.hidden{display:none!important}
+.modal-bg{position:fixed;inset:0;background:rgba(15,20,30,.55);display:grid;place-items:center;z-index:50;padding:20px}
+.modal{background:#fff;border-radius:12px;max-width:560px;width:100%;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal h3{margin:0 0 8px;font-size:17px}
+.modal ul{margin:8px 0;padding-left:18px}
+.toast{position:fixed;right:20px;bottom:20px;background:#1d2330;color:#fff;padding:10px 14px;border-radius:8px;z-index:60;max-width:420px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.toast.err{background:var(--err)}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.small{font-size:12px}.muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <div class="mark"></div>
+  <h1>FortiCloud Asset Bulk Manager</h1>
+  <span id="demoPill" class="pill demo hidden"><span class="dot"></span>DEMO MODE - fake FortiCloud</span>
+  <div class="spacer"></div>
+  <span class="limits" id="limits"></span>
+  <span id="connPill" class="pill off"><span class="dot"></span>Not connected</span>
+</header>
+
+<main>
+  <!-- 1. CONNECTION -->
+  <section class="card">
+    <h2><span class="num">1</span>Connect to FortiCloud</h2>
+    <p class="sub">Use an IAM <b>API user</b> (FortiCloud &rarr; Services &rarr; IAM &rarr; Users &rarr; Add New &rarr; API User) whose permission profile includes Asset Management.
+      Credentials stay in this app's memory only and are never written to disk.</p>
+    <div class="grid g4">
+      <div><label for="apiId">API ID</label><input type="text" id="apiId" autocomplete="off" spellcheck="false" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></div>
+      <div><label for="password">Password</label><input type="password" id="password" autocomplete="off"></div>
+      <div><label for="clientId">Client ID</label><input type="text" id="clientId" value="assetmanagement" spellcheck="false"></div>
+      <div><label for="accountId">Account ID <span class="muted">(optional)</span></label><input type="text" id="accountId" placeholder="Local scope: leave blank" spellcheck="false"></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="btnTest" class="primary">Test connectivity</button>
+      <button id="btnConnect">Connect</button>
+      <button id="btnDisconnect" class="hidden">Disconnect</button>
+      <button class="ghost" id="btnCredFile">Load IAM credentials file&hellip;</button>
+      <input type="file" id="credFile" accept=".txt,.csv,.json" class="hidden">
+      <span class="spacer" style="flex:1"></span>
+      <div style="min-width:240px"><input type="text" id="testSerial" placeholder="Optional: a serial to test-read" spellcheck="false"></div>
+    </div>
+    <div id="testOut" class="hidden">
+      <ul class="steps" id="testSteps"></ul>
+    </div>
+  </section>
+
+  <!-- 2. OPERATION -->
+  <section class="card">
+    <h2><span class="num">2</span>Choose an operation</h2>
+    <p class="sub">Each operation has its own template. Download it, fill one row per product, then load it below.</p>
+    <div class="tabs" id="tabs"></div>
+    <div class="opinfo">
+      <div>
+        <h3 id="opTitle" style="margin:0 0 4px;font-size:15px"></h3>
+        <div class="row small" style="margin-bottom:8px"><span class="badge" id="opPerm"></span><span class="mono muted" id="opEndpoint"></span></div>
+        <p id="opDesc" style="margin:0"></p>
+        <div id="opWarn" class="alert warn hidden"></div>
+      </div>
+      <div class="row">
+        <button id="tplCsv">Template .csv</button>
+        <button id="tplXlsx">Template .xlsx</button>
+      </div>
+    </div>
+    <details>
+      <summary>Columns for this operation</summary>
+      <table class="cols" style="margin-top:8px"><thead><tr><th>Column</th><th>Description</th><th>Example</th></tr></thead><tbody id="colsBody"></tbody></table>
+      <p class="hint">Column names are matched loosely (e.g. "Serial Number", "SN" and "serial" all work). Unknown columns are ignored.</p>
+    </details>
+  </section>
+
+  <!-- 3. LOAD DATA -->
+  <section class="card">
+    <h2><span class="num">3</span>Load and check your data</h2>
+    <p class="sub">CSV or Excel (.xlsx, first sheet, header row first). Rows are validated locally before anything is sent.</p>
+    <div class="drop" id="drop"><strong>Drop a .csv or .xlsx file here</strong> or click to choose<input type="file" id="fileIn" accept=".csv,.xlsx,.xlsm,.txt,.tsv" class="hidden"></div>
+    <details id="pasteBox"><summary>&hellip;or paste rows (copy from Excel, including the header row)</summary>
+      <textarea id="pasteText" placeholder="serialNumber&#9;contractNumber&#10;FGT60FTK21000001&#9;2121DJ8902"></textarea>
+      <div class="row" style="margin-top:8px"><button id="btnPaste">Check pasted rows</button></div>
+    </details>
+    <div id="dataOut" class="hidden">
+      <div class="row" style="margin-top:14px;justify-content:space-between">
+        <div><b id="dsName"></b> <span class="muted small" id="dsCols"></span></div>
+      </div>
+      <div id="dsAlerts"></div>
+      <div class="chips" id="chips"></div>
+      <div class="tablewrap"><table id="prevTable"></table></div>
+      <p class="hint" id="prevNote"></p>
+    </div>
+  </section>
+
+  <!-- 4. RUN -->
+  <section class="card">
+    <h2><span class="num">4</span>Review and run</h2>
+    <p class="sub">Use <b>Dry run</b> to see the exact API requests without sending anything. <b>Run</b> sends them to FortiCloud.</p>
+    <details id="settingsBox"><summary>Run settings (rate limits &amp; batching)</summary>
+      <div class="grid g3" style="margin-top:10px">
+        <div><label>Serials per request</label><input type="number" id="sBatch" min="1" max="50"><div class="hint">Registration is capped at 10 (FortiCloud limit).</div></div>
+        <div><label>Minimum seconds between calls</label><input type="number" id="sDelay" min="0" step="0.5"></div>
+        <div><label>Max retries (429 / 5xx)</label><input type="number" id="sRetries" min="0" max="5"></div>
+        <div><label>Max calls per minute</label><input type="number" id="sMin" min="1" max="100"><div class="hint">FortiCloud allows 100/min.</div></div>
+        <div><label>Max calls per hour</label><input type="number" id="sHour" min="1" max="1000"><div class="hint">FortiCloud allows 1000/hour.</div></div>
+        <div><label>Auto-stop after N errors in an hour</label><input type="number" id="sErr" min="1" max="10"><div class="hint">FortiCloud allows ~10 errors/hour per API user.</div></div>
+      </div>
+      <label class="row small" style="margin-top:10px;font-weight:500;color:var(--ink)"><input type="checkbox" id="sStop"> Stop on the first failed request</label>
+    </details>
+    <div class="row" style="margin-top:14px">
+      <button id="btnDry" disabled>Dry run</button>
+      <button id="btnRun" class="primary" disabled>Run</button>
+      <span class="small muted" id="runHint">Load data first.</span>
+    </div>
+    <div id="dryOut" class="hidden">
+      <div class="alert info" id="drySummary"></div>
+      <pre id="dryJson"></pre>
+    </div>
+  </section>
+
+  <!-- 5. RESULTS -->
+  <section class="card hidden" id="jobCard">
+    <h2><span class="num">5</span>Progress and results</h2>
+    <div class="row" style="justify-content:space-between">
+      <div class="small"><b id="jobState"></b> <span class="muted" id="jobMeta"></span></div>
+      <div class="row"><button id="btnStop" class="danger hidden">Stop</button></div>
+    </div>
+    <div class="progress"><div id="bar"></div></div>
+    <div class="small muted" id="jobWait"></div>
+    <div class="counts" id="counts"></div>
+    <div id="jobReason"></div>
+    <details open><summary>Activity log</summary><div class="log" id="log"></div></details>
+    <div id="resultsBox" class="hidden" style="margin-top:14px">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <div class="row"><button id="dlCsv">Download results .csv</button><button id="dlXlsx">Download results .xlsx</button></div>
+        <div class="row"><button id="btnRetry" class="hidden">Load failed / not-run rows for retry</button></div>
+      </div>
+      <div class="small muted" id="savedTo"></div>
+      <div class="tablewrap" style="margin-top:8px"><table id="resTable"></table></div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-bg hidden" id="modalBg"><div class="modal">
+  <h3 id="mTitle"></h3><div id="mBody"></div>
+  <div id="mConfirmWrap" class="hidden" style="margin-top:12px"><label id="mConfirmLabel"></label><input type="text" id="mConfirm" autocomplete="off" spellcheck="false"></div>
+  <div class="row" style="justify-content:flex-end;margin-top:16px"><button id="mCancel">Cancel</button><button id="mOk" class="primary">Run now</button></div>
+</div></div>
+<div class="toast hidden" id="toast"></div>
+
+<script>
+const SESSION = "__SESSION_KEY__";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let META = null, OP = "register", DS = null, JOB = null, LOGOFF = 0, POLL = null, FILTER = "all";
+
+async function api(path, body) {
+  const r = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json", "X-Session": SESSION}, body: JSON.stringify(body || {})});
+  let data; try { data = await r.json(); } catch { data = {error: "Bad response from the local app (HTTP " + r.status + ")"}; }
+  if (!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+  return data;
+}
+function toast(msg, err) { const t = $("toast"); t.textContent = msg; t.className = "toast" + (err ? " err" : ""); clearTimeout(t._h); t._h = setTimeout(() => t.classList.add("hidden"), err ? 7000 : 3500); }
+function busy(btn, on, label) { if (on) { btn._t = btn.innerHTML; btn.innerHTML = '<span class="spin"></span> ' + (label || "Working"); btn.disabled = true; } else { btn.innerHTML = btn._t || btn.innerHTML; btn.disabled = false; } }
+
+function creds() { return {apiId: $("apiId").value.trim(), password: $("password").value, clientId: $("clientId").value.trim() || "assetmanagement"}; }
+function settings() {
+  return {batchSize: +$("sBatch").value, delaySeconds: +$("sDelay").value, retries: +$("sRetries").value,
+          maxPerMinute: +$("sMin").value, maxPerHour: +$("sHour").value, maxErrorsPerHour: +$("sErr").value,
+          stopOnError: $("sStop").checked, accountId: $("accountId").value.trim()};
+}
+
+function renderStatus(st) {
+  if (!st) return;
+  const p = $("connPill");
+  if (st.connected) { p.className = "pill on"; p.innerHTML = '<span class="dot"></span>Connected: ' + esc(st.apiId); }
+  else { p.className = "pill off"; p.innerHTML = '<span class="dot"></span>Not connected'; }
+  $("btnDisconnect").classList.toggle("hidden", !st.connected);
+  $("btnConnect").textContent = st.connected ? "Reconnect" : "Connect";
+  $("demoPill").classList.toggle("hidden", !st.demo);
+  const L = st.limits || {};
+  $("limits").textContent = `API calls: ${L.callsLastMinute ?? 0}/min · ${L.callsLastHour ?? 0}/hr · errors ${L.errorsLastHour ?? 0}/hr`;
+  updateRunButtons(st);
+}
+let LAST_STATUS = null;
+function updateRunButtons(st) {
+  st = st || LAST_STATUS; LAST_STATUS = st;
+  const valid = DS ? DS.summary.valid : 0;
+  const running = JOB && JOB.state === "running";
+  $("btnDry").disabled = !valid;
+  $("btnRun").disabled = !valid || !(st && st.connected) || running;
+  let h = "";
+  if (!DS) h = "Load data first.";
+  else if (!valid) h = "No valid rows to send - fix the errors above.";
+  else if (!(st && st.connected)) h = "Connect to FortiCloud (step 1) to run. Dry run works without connecting.";
+  else if (running) h = "A job is running.";
+  else h = `${valid} row(s) ready` + (DS.summary.error ? `, ${DS.summary.error} with errors will be skipped.` : ".");
+  $("runHint").textContent = h;
+}
+
+// ---------------------------------------------------------------- connection
+$("btnTest").onclick = async () => {
+  const b = $("btnTest"); busy(b, true, "Testing");
+  $("testOut").classList.remove("hidden");
+  $("testSteps").innerHTML = '<li><span class="ic run"><span class="spin"></span></span><div><div class="nm">Running checks&hellip;</div></div></li>';
+  try {
+    const c = creds();
+    const r = await api("/api/test", {...(c.apiId && c.password ? c : {}), testSerial: $("testSerial").value.trim(), settings: settings()});
+    $("testSteps").innerHTML = r.steps.map(s => `<li><span class="ic ${s.level}">${s.level === "ok" ? "&#10003;" : s.level === "warn" ? "!" : "&#10005;"}</span><div><div class="nm">${esc(s.name)}</div><div class="dt">${esc(s.detail)}</div></div></li>`).join("")
+      + `<li><span></span><div class="small"><b>${r.ok ? "All checks passed - you're connected." : "Some checks failed - see details above."}</b></div></li>`;
+    renderStatus(r.status || (await api("/api/status")));
+  } catch (e) { $("testSteps").innerHTML = `<li><span class="ic error">&#10005;</span><div><div class="nm">Test failed</div><div class="dt">${esc(e.message)}</div></div></li>`; }
+  busy(b, false);
+};
+$("btnConnect").onclick = async () => {
+  const b = $("btnConnect"); busy(b, true, "Connecting");
+  try { renderStatus(await api("/api/connect", creds())); toast("Connected to FortiCloud."); }
+  catch (e) { toast(e.message, true); }
+  busy(b, false); renderStatus(await api("/api/status"));
+};
+$("btnDisconnect").onclick = async () => {
+  try { renderStatus(await api("/api/disconnect")); toast("Disconnected; token revoked."); } catch (e) { toast(e.message, true); }
+};
+$("btnCredFile").onclick = () => $("credFile").click();
+$("credFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const t = await f.text();
+  const get = re => { const m = t.match(re); return m ? m[1].trim().replace(/^["']|["',]$/g, "") : ""; };
+  const id = get(/api[\s_-]*id\s*["']?\s*[:=]\s*["']?([^\s"',]+)/i) || get(/username\s*["']?\s*[:=]\s*["']?([^\s"',]+)/i);
+  const pw = get(/password\s*["']?\s*[:=]\s*["']?([^\s"',]+)/i);
+  let cid = get(/client\s*id[^:\n]*asset[^:\n]*:\s*["']?([^\s"',]+)/i) || get(/client[\s_-]*id[^:=\n]*[:=]\s*["']?([^\s"',]+)/i);
+  if (id) $("apiId").value = id; if (pw) $("password").value = pw; if (cid) $("clientId").value = cid;
+  toast(id && pw ? "Credentials loaded into the form (not saved anywhere)." : "Could not find apiId/password in that file.", !(id && pw));
+  e.target.value = "";
+};
+
+// ---------------------------------------------------------------- operations
+function renderTabs() {
+  $("tabs").innerHTML = META.operations.map(o => `<button class="tab ${o.key === OP ? "active" : ""}" data-op="${o.key}">${esc(o.short)}<span class="rw">${o.write ? "WRITE" : "READ"}</span></button>`).join("");
+  document.querySelectorAll(".tab").forEach(t => t.onclick = () => selectOp(t.dataset.op));
+}
+function opDef(k) { return META.operations.find(o => o.key === (k || OP)); }
+function selectOp(k) {
+  if (k !== OP && DS) { DS = null; $("dataOut").classList.add("hidden"); $("dryOut").classList.add("hidden"); }
+  OP = k; renderTabs();
+  const o = opDef();
+  $("opTitle").textContent = o.title; $("opPerm").textContent = "Permission: " + o.permission;
+  $("opPerm").className = "badge" + (o.write ? " w" : ""); $("opEndpoint").textContent = "POST " + o.endpoint;
+  $("opDesc").textContent = o.description;
+  const warn = {decommission: "Decommissioning is treated as permanent. You will be asked to type DECOMMISSION to confirm.",
+                transfer: "Your API user is Local scope - FortiCloud will reject transfers unless the user has Organization (OU) access to both accounts."}[k];
+  $("opWarn").classList.toggle("hidden", !warn); $("opWarn").textContent = warn || "";
+  $("colsBody").innerHTML = o.columns.map(c => `<tr><td>${esc(c.name)}${c.required ? ' <span class="req">*</span>' : ""}</td><td>${esc(c.help)}</td><td class="mono">${esc(c.example)}</td></tr>`).join("");
+  updateRunButtons();
+}
+$("tplCsv").onclick = () => location.href = `/download/template?op=${OP}&fmt=csv&s=${SESSION}`;
+$("tplXlsx").onclick = () => location.href = `/download/template?op=${OP}&fmt=xlsx&s=${SESSION}`;
+
+// ---------------------------------------------------------------- data
+const drop = $("drop");
+drop.onclick = () => $("fileIn").click();
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); };
+$("fileIn").onchange = e => { if (e.target.files[0]) loadFile(e.target.files[0]); e.target.value = ""; };
+$("btnPaste").onclick = async () => {
+  const t = $("pasteText").value; if (!t.trim()) return toast("Paste some rows first.", true);
+  try { showDataset(await api("/api/parse", {op: OP, text: t})); } catch (e) { toast(e.message, true); }
+};
+async function loadFile(f) {
+  if (f.size > 20 * 1024 * 1024) return toast("File is larger than 20 MB.", true);
+  const buf = new Uint8Array(await f.arrayBuffer());
+  let bin = ""; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+  try { showDataset(await api("/api/parse", {op: OP, filename: f.name, content: btoa(bin)})); } catch (e) { toast(e.message, true); }
+}
+function showDataset(d) {
+  DS = d; FILTER = d.summary.error ? "error" : "all";
+  $("dataOut").classList.remove("hidden"); $("dryOut").classList.add("hidden");
+  $("dsName").textContent = d.filename;
+  $("dsCols").textContent = "Columns used: " + d.columns.join(", ");
+  let a = "";
+  if (d.missingColumns.length) a += `<div class="alert err">Missing required column(s): <b>${esc(d.missingColumns.join(", "))}</b>. Check the header row or download the template.</div>`;
+  if (d.unknownColumns.length) a += `<div class="alert warn">Ignored column(s) not used by this operation: ${esc(d.unknownColumns.join(", "))}</div>`;
+  $("dsAlerts").innerHTML = a;
+  renderPreview(); updateRunButtons();
+  $("dataOut").scrollIntoView({behavior: "smooth", block: "nearest"});
+}
+function renderPreview() {
+  const s = DS.summary;
+  const chip = (k, cls, label, n) => `<span class="chip ${cls} ${FILTER === k ? "sel" : ""}" data-f="${k}">${label}: ${n}</span>`;
+  $("chips").innerHTML = chip("all", "all", "All rows", s.total) + chip("ok", "ok", "Ready", s.ok) + chip("warning", "warn", "Warnings", s.warning) + chip("error", "err", "Errors (skipped)", s.error);
+  document.querySelectorAll("#chips .chip").forEach(c => c.onclick = () => { FILTER = c.dataset.f; renderPreview(); });
+  const rows = DS.rows.filter(r => FILTER === "all" || r.status === FILTER);
+  const cols = DS.columns;
+  const lim = 500;
+  $("prevTable").innerHTML = `<thead><tr><th>Row</th><th>Check</th>${cols.map(c => `<th>${esc(c)}</th>`).join("")}<th>Issues</th></tr></thead><tbody>` +
+    rows.slice(0, lim).map(r => `<tr><td>${r.row}</td><td><span class="st ${r.status}">${r.status === "ok" ? "Ready" : r.status === "warning" ? "Warning" : "Error"}</span></td>${cols.map(c => `<td class="${c === "serialNumber" ? "mono" : ""}">${esc(r.raw[c])}</td>`).join("")}<td class="issues">${r.errors.map(e => `<div class="e">${esc(e)}</div>`).join("")}${r.warnings.map(w => `<div class="w">${esc(w)}</div>`).join("")}</td></tr>`).join("") + "</tbody>";
+  $("prevNote").textContent = rows.length > lim ? `Showing first ${lim} of ${rows.length} rows.` : (rows.length ? "" : "No rows in this view.");
+}
+
+// ---------------------------------------------------------------- settings
+function fillSettings(s) { $("sBatch").value = s.batchSize; $("sDelay").value = s.delaySeconds; $("sRetries").value = s.retries; $("sMin").value = s.maxPerMinute; $("sHour").value = s.maxPerHour; $("sErr").value = s.maxErrorsPerHour; $("sStop").checked = !!s.stopOnError; if (s.accountId) $("accountId").value = s.accountId; }
+
+// ---------------------------------------------------------------- dry run / run
+$("btnDry").onclick = async () => {
+  try {
+    const r = await api("/api/dryrun", {datasetId: DS.datasetId, settings: settings()});
+    $("dryOut").classList.remove("hidden");
+    $("drySummary").innerHTML = `Nothing was sent. <b>${r.count}</b> request(s) covering <b>${r.serials}</b> serial(s)` + (r.skipped ? `; ${r.skipped} invalid row(s) skipped` : "") + `. Estimated time: ~${fmtDur(r.estimatedSeconds)}.`;
+    $("dryJson").textContent = r.requests.map((q, i) => `# ${i + 1}  ${q.method} ${q.url}   (rows ${q.rows.join(", ")})\n` + JSON.stringify(q.payload, null, 2)).join("\n\n");
+  } catch (e) { toast(e.message, true); }
+};
+function fmtDur(s) { s = Math.max(1, s | 0); return s < 90 ? s + "s" : s < 5400 ? Math.round(s / 60) + " min" : (s / 3600).toFixed(1) + " h"; }
+
+$("btnRun").onclick = async () => {
+  let dry; try { dry = await api("/api/dryrun", {datasetId: DS.datasetId, settings: settings()}); } catch (e) { return toast(e.message, true); }
+  const o = opDef();
+  $("mTitle").textContent = (o.write ? "Send changes to FortiCloud? " : "Run lookup? ") + "- " + o.title;
+  $("mBody").innerHTML = `<ul><li><b>${dry.serials}</b> serial(s) in <b>${dry.count}</b> API call(s)</li>` +
+    (dry.skipped ? `<li>${dry.skipped} row(s) with errors will be skipped</li>` : "") +
+    `<li>Account: ${esc($("accountId").value.trim() || "API user's own account (Local scope)")}</li>` +
+    `<li>Estimated time: ~${fmtDur(dry.estimatedSeconds)}</li>` +
+    `<li>Target: <span class="mono">${esc(LAST_STATUS && LAST_STATUS.demo ? "DEMO (fake FortiCloud)" : "support.fortinet.com")}</span></li></ul>` +
+    (o.write && LAST_STATUS && LAST_STATUS.demo ? `<div class="alert info">Demo mode: nothing is sent to Fortinet.</div>` : "") +
+    (o.write && !(LAST_STATUS && LAST_STATUS.demo) ? `<div class="alert warn">These changes are applied to your live FortiCloud account.${OP === "register" ? " Registered products and contracts generally can't be unregistered through the API." : ""}</div>` : "");
+  const word = o.confirmWord;
+  $("mConfirmWrap").classList.toggle("hidden", !word);
+  $("mConfirm").value = ""; $("mConfirmLabel").textContent = word ? `Type ${word} to confirm` : "";
+  $("mOk").textContent = o.write ? "Run now" : "Start lookup";
+  $("mOk").className = OP === "decommission" ? "danger" : "primary";
+  $("modalBg").classList.remove("hidden");
+  if (word) setTimeout(() => $("mConfirm").focus(), 50);
+};
+$("mCancel").onclick = () => $("modalBg").classList.add("hidden");
+$("mOk").onclick = async () => {
+  try {
+    const r = await api("/api/submit", {datasetId: DS.datasetId, settings: settings(), confirm: $("mConfirm").value});
+    $("modalBg").classList.add("hidden");
+    startPolling(r.jobId);
+  } catch (e) { toast(e.message, true); }
+};
+
+function startPolling(id) {
+  JOB = {id, state: "running"}; LOGOFF = 0; $("log").innerHTML = "";
+  $("jobCard").classList.remove("hidden"); $("resultsBox").classList.add("hidden"); $("jobReason").innerHTML = "";
+  $("btnStop").classList.remove("hidden");
+  $("jobCard").scrollIntoView({behavior: "smooth"});
+  updateRunButtons();
+  clearInterval(POLL); POLL = setInterval(poll, 1000); poll();
+}
+async function poll() {
+  let s; try { s = await api("/api/job", {jobId: JOB.id, since: LOGOFF}); } catch (e) { return; }
+  JOB = s; LOGOFF = s.logOffset;
+  const pct = s.totalRequests ? Math.round(100 * s.doneRequests / s.totalRequests) : 100;
+  $("bar").style.width = pct + "%";
+  const label = {running: "Running", done: "Completed", stopped: "Stopped", error: "Error"}[s.state] || s.state;
+  $("jobState").textContent = label + ` - ${opDef(s.op).title}`;
+  $("jobMeta").textContent = `· request ${s.doneRequests}/${s.totalRequests} · ${fmtDur(s.elapsed)}`;
+  $("jobWait").textContent = s.waiting || "";
+  const c = s.counts;
+  $("counts").innerHTML = [["OK", c.OK], ["Failed", c.FAILED], ["Check", c.CHECK], ["Not run", c["NOT RUN"]], ["Skipped (invalid)", c.SKIPPED]].map(([k, v]) => `<div><b>${v}</b>${k}</div>`).join("");
+  const box = $("log");
+  for (const l of s.log) {
+    const d = document.createElement("div"); d.className = "l " + l.level;
+    d.innerHTML = `${esc(l.t)}  ${esc(l.text)}` + (l.detail ? ' <span class="d">details</span>' : "");
+    if (l.detail) d.querySelector(".d").onclick = () => { const p = d.querySelector("pre"); if (p) p.remove(); else { const pre = document.createElement("pre"); pre.textContent = JSON.stringify(l.detail, null, 2); d.appendChild(pre); } };
+    box.appendChild(d);
+  }
+  if (s.log.length) box.scrollTop = box.scrollHeight;
+  renderStatus({...(LAST_STATUS || {}), limits: s.limits});
+  if (s.state !== "running") {
+    clearInterval(POLL); $("btnStop").classList.add("hidden");
+    if (s.reason) $("jobReason").innerHTML = `<div class="alert ${s.state === "done" ? "info" : "warn"}">${esc(s.reason)}</div>`;
+    showResults(s);
+    toast(`${label}: ${c.OK} OK, ${c.FAILED} failed.`, c.FAILED > 0);
+    updateRunButtons();
+  }
+}
+function showResults(s) {
+  $("resultsBox").classList.remove("hidden");
+  $("savedTo").textContent = s.savedFile ? "A copy was saved to: " + s.savedFile : "";
+  const t = s.table; if (!t) return;
+  const ri = t.headers.indexOf("result");
+  $("resTable").innerHTML = `<thead><tr>${t.headers.map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>` +
+    t.rows.slice(0, 1000).map(r => `<tr>${r.map((v, i) => i === ri ? `<td><span class="st ${String(v).replace(" ", "")}">${esc(v)}</span></td>` : `<td class="${t.headers[i] === "serialNumber" ? "mono" : ""}">${esc(v)}</td>`).join("")}</tr>`).join("") + "</tbody>";
+  const c = s.counts;
+  $("btnRetry").classList.toggle("hidden", !(c.FAILED + c["NOT RUN"] + c.CHECK));
+}
+$("btnStop").onclick = async () => { await api("/api/stop", {jobId: JOB.id}); toast("Stopping after the current call..."); };
+$("dlCsv").onclick = () => location.href = `/download/results?job=${JOB.id}&fmt=csv&s=${SESSION}`;
+$("dlXlsx").onclick = () => location.href = `/download/results?job=${JOB.id}&fmt=xlsx&s=${SESSION}`;
+$("btnRetry").onclick = async () => {
+  try {
+    const d = await api("/api/retry", {jobId: JOB.id, results: ["FAILED", "NOT RUN", "CHECK"]});
+    if (JOB.op !== OP) { OP = JOB.op; selectOp(OP); }
+    showDataset(d); toast("Loaded rows for retry. Fix the cause first (see messages), then Run.");
+  } catch (e) { toast(e.message, true); }
+};
+
+// ---------------------------------------------------------------- init
+(async () => {
+  try {
+    META = await api("/api/meta");
+    fillSettings(META.settings); renderStatus(META.status); selectOp(OP);
+    if (META.status.demo && !$("apiId").value) { $("apiId").value = "DEMO-API-USER"; $("password").value = "demo"; }
+    setInterval(async () => { if (!(JOB && JOB.state === "running")) { try { renderStatus(await api("/api/status")); } catch {} } }, 15000);
+  } catch (e) { document.querySelector("main").innerHTML = `<div class="alert err">Could not reach the local app: ${esc(e.message)}. Restart it and reload this page.</div>`; }
+})();
+</script>
+</body>
+</html>
